@@ -12,7 +12,10 @@
         "License": "GPL-3.0-or-later",
         "Name": "Stealth Dark",
         "Version": "1.0",
-        "Website": "https://github.com/user161803/kde_theme"
+        "Website": "https://github.com/user161803/kde_theme",
+        "ServiceTypes": [
+            "Plasma/LookAndFeel"
+        ]
     },
     "X-Plasma-APIVersion": "2",
     "X-Plasma-MainScript": "defaults"

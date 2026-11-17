@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Stealth Dark — installer for KDE Plasma 6
+# Stealth Dark — installer for KDE Plasma 5 and Plasma 6
 #
 #   ./install.sh                 install the Plasma parts for the current user
 #   ./install.sh --apply         ...and apply them right away
@@ -15,6 +15,9 @@
 #   --layout       with --apply: also replace the panel layout with the Stealth Dark dock
 #   --uninstall    remove the installed files
 #   -h, --help     show this help
+#
+# The SDDM theme works with the Qt 5 greeter (Plasma 5) and the Qt 6 greeter
+# (Plasma 6); the right one is detected. Force it with STEALTH_SDDM_QT=5 or 6.
 
 set -euo pipefail
 
@@ -33,7 +36,7 @@ warn() { printf '  %s!%s %s\n' "$yellow" "$reset" "$*"; }
 die()  { printf '%serror:%s %s\n' "$red" "$reset" "$*" >&2; exit 1; }
 have() { command -v "$1" >/dev/null 2>&1; }
 
-usage() { sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { awk 'NR > 1 && /^#/ { sub(/^# ?/, ""); print; next } NR > 1 { exit }' "$0"; }
 
 for arg in "$@"; do
     case "$arg" in
@@ -90,14 +93,20 @@ uninstall_plasma() {
 
 apply_plasma() {
     info "Applying Stealth Dark"
-    if have plasma-apply-lookandfeel; then
+    local ver
+    ver="$(plasma_version)"
+    [[ -n "$ver" ]] && ok "detected Plasma $ver"
+    local lnf_tool=""
+    if have plasma-apply-lookandfeel; then lnf_tool=plasma-apply-lookandfeel
+    elif have lookandfeeltool; then lnf_tool=lookandfeeltool; fi   # Plasma 5 < 5.22
+    if [[ -n "$lnf_tool" ]]; then
         if [[ $DO_LAYOUT -eq 1 ]]; then
-            plasma-apply-lookandfeel --apply "$LNF_ID" --resetLayout && ok "global theme + dock layout"
+            "$lnf_tool" --apply "$LNF_ID" --resetLayout && ok "global theme + dock layout"
         else
-            plasma-apply-lookandfeel --apply "$LNF_ID" && ok "global theme"
+            "$lnf_tool" --apply "$LNF_ID" && ok "global theme"
         fi
     else
-        warn "plasma-apply-lookandfeel not found (is this Plasma 6?)"
+        warn "neither plasma-apply-lookandfeel nor lookandfeeltool found: is KDE Plasma installed?"
     fi
     have plasma-apply-colorscheme && plasma-apply-colorscheme StealthDark >/dev/null && ok "color scheme"
     have plasma-apply-desktoptheme && plasma-apply-desktoptheme StealthDark >/dev/null && ok "Plasma style"
@@ -110,13 +119,15 @@ apply_plasma() {
         warn "JetBrains Mono not found: install it for the intended look (pacman -S ttf-jetbrains-mono / apt install fonts-jetbrains-mono)"
     fi
     if ! have kwriteconfig6 && ! have kwriteconfig5; then
-        warn "kwriteconfig6 not found: decoration, lock screen, splash and Konsole were not configured"
+        warn "kwriteconfig6/kwriteconfig5 not found: decoration, lock screen, splash and Konsole were not configured"
         return 0
     fi
     kwrite --file kwinrc --group org.kde.kdecoration2 --key library org.kde.kwin.aurorae
     kwrite --file kwinrc --group org.kde.kdecoration2 --key theme __aurorae__svg__StealthDark
-    if have qdbus6; then qdbus6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || true
-    elif have qdbus; then qdbus org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || true; fi
+    local q
+    for q in qdbus6 qdbus qdbus-qt5; do
+        if have "$q"; then "$q" org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || true; break; fi
+    done
     ok "window decoration"
 
     kwrite --file kscreenlockerrc --group Greeter --group Wallpaper --group org.kde.image --group General \
@@ -133,26 +144,62 @@ apply_plasma() {
     ok "Konsole profile (new windows)"
 }
 
+plasma_version() {
+    if have plasmashell; then plasmashell --version 2>/dev/null | awk '{print $2}'; fi
+}
+
+find_greeter() {   # prints the path of the first greeter binary found
+    local name="$1" p
+    for p in /usr/bin/"$name" /usr/lib/sddm/"$name" /usr/lib64/sddm/"$name" /usr/lib/*/sddm/"$name" \
+             /usr/libexec/"$name" /usr/libexec/sddm/"$name"; do
+        [[ -x "$p" ]] && { echo "$p"; return 0; }
+    done
+    command -v "$name" 2>/dev/null
+}
+
+# Decide which SDDM greeter the theme targets: 6 (Plasma 6) or 5 (Plasma 5)
+sddm_qt_version() {
+    if [[ -n "${STEALTH_SDDM_QT:-}" ]]; then echo "$STEALTH_SDDM_QT"; return; fi
+    if [[ -n "$(find_greeter sddm-greeter-qt6)" ]]; then echo 6; return; fi
+    if [[ -n "$(find_greeter sddm-greeter)" ]]; then echo 5; return; fi
+    local ver
+    ver="$(plasma_version)"
+    [[ "$ver" == 5.* ]] && echo 5 || echo 6
+}
+
 sddm_checks() {
     if ! have sddm; then warn "sddm is not installed"; fi
-    if ! ls /usr/lib*/sddm/sddm-greeter-qt6 /usr/lib/*/sddm/sddm-greeter-qt6 /usr/bin/sddm-greeter-qt6 >/dev/null 2>&1; then
-        warn "sddm-greeter-qt6 not found: this theme needs SDDM >= 0.21 built with Qt 6"
+    if [[ "$1" == 6 ]]; then
+        ok "using the Qt 6 greeter (sddm-greeter-qt6, Plasma 6)"
+        printf '  %sneeds:%s qt6-declarative (QtQuick, Controls, Effects) and qt6-svg\n' "$dim" "$reset"
+    else
+        ok "using the Qt 5 greeter (sddm-greeter, Plasma 5)"
+        printf '  %sneeds:%s qt5-graphicaleffects, qt5-quickcontrols2 and qt5-svg\n' "$dim" "$reset"
     fi
 }
 
 install_sddm() {
     info "Installing the SDDM theme to $SDDM_DIR (sudo)"
-    sddm_checks
+    local qt
+    qt="$(sddm_qt_version)"
+    [[ "$qt" == 5 || "$qt" == 6 ]] || die "STEALTH_SDDM_QT must be 5 or 6"
+    sddm_checks "$qt"
     sudo rm -rf "$SDDM_DIR"
     sudo mkdir -p "$SDDM_DIR"
     sudo cp -r "$SRC/sddm/stealth-dark/." "$SDDM_DIR/"
+    if [[ "$qt" == 5 ]]; then
+        # without QtVersion=6, SDDM >= 0.21 uses the Qt 5 greeter; older SDDM ignores the key
+        sudo sed -i '/^QtVersion=/d' "$SDDM_DIR/metadata.desktop"
+    fi
     sudo mkdir -p /etc/sddm.conf.d
     printf '[Theme]\nCurrent=stealth-dark\n' | sudo tee "$SDDM_CONF" >/dev/null
     ok "theme installed and activated ($SDDM_CONF)"
     if [[ -f /etc/sddm.conf ]] && grep -q '^Current=' /etc/sddm.conf; then
         warn "/etc/sddm.conf also sets [Theme] Current= and takes precedence; change it to stealth-dark"
     fi
-    printf '  %stest it with:%s sddm-greeter-qt6 --test-mode --theme %s\n' "$dim" "$reset" "$SDDM_DIR"
+    local greeter=sddm-greeter-qt6
+    [[ "$qt" == 5 ]] && greeter=sddm-greeter
+    printf '  %stest it with:%s %s --test-mode --theme %s\n' "$dim" "$reset" "$greeter" "$SDDM_DIR"
 }
 
 uninstall_sddm() {

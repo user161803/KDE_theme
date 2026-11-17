@@ -1,6 +1,5 @@
-import QtQuick
-import QtQuick.Controls.Basic
-import QtQuick.Effects
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 
 // Dark rounded combo box with a small caption above the current value,
 // used for the user and the session pickers.
@@ -76,13 +75,11 @@ ComboBox {
 
     delegate: ItemDelegate {
         id: entry
-        required property var model
-        required property int index
         width: control.width - 16 * control.s
         height: 46 * control.s
         highlighted: control.highlightedIndex === index
         contentItem: Text {
-            text: entry.model[control.textRole]
+            text: model[control.textRole]
             color: entry.highlighted ? "#ffffff" : "#888899"
             font.family: control.fontFamily
             font.pixelSize: 16 * control.s
@@ -128,12 +125,6 @@ ComboBox {
             color: Qt.rgba(10 / 255, 10 / 255, 15 / 255, 0.94)
             border.color: "#333344"
             border.width: 1
-            layer.enabled: true
-            layer.effect: MultiEffect {
-                shadowEnabled: true
-                shadowColor: Qt.rgba(0, 0, 0, 0.8)
-                shadowBlur: 0.8
-            }
         }
     }
 }

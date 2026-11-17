@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
 """Render the Plasma splash screen at a given ksplash stage.
 
-Usage: xvfb-run python3 tools/splash_preview.py OUTPUT.png [--stage N] [--size W H]
-Requires PySide6. Effects (blur) need a real OpenGL context, e.g. under xvfb-run
+Usage: xvfb-run python3 tools/splash_preview.py OUTPUT.png [--stage N] [--size W H] [--qt5]
+Requires PySide6 (Qt 6) or, with --qt5, PyQt5 (Qt 5). Effects (blur) need a real OpenGL context, e.g. under xvfb-run
 with QT_QPA_PLATFORM=xcb.
 """
 import argparse
 import os
 import sys
 
-from PySide6.QtCore import QTimer, QUrl
-from PySide6.QtGui import QGuiApplication
-from PySide6.QtQuick import QQuickView
+if "--qt5" in sys.argv:
+    from PyQt5.QtCore import QTimer, QUrl
+    from PyQt5.QtGui import QGuiApplication
+    from PyQt5.QtQuick import QQuickView
+else:
+    from PySide6.QtCore import QTimer, QUrl
+    from PySide6.QtGui import QGuiApplication
+    from PySide6.QtQuick import QQuickView
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SPLASH = os.path.join(ROOT, "plasma", "look-and-feel", "org.kde.stealthdark.desktop",
@@ -23,6 +28,7 @@ def main():
     ap.add_argument("out")
     ap.add_argument("--stage", type=int, default=4)
     ap.add_argument("--size", type=int, nargs=2, default=[1920, 1080])
+    ap.add_argument("--qt5", action="store_true", help="render with Qt 5 (PyQt5), like Plasma 5")
     args = ap.parse_args()
     app = QGuiApplication(sys.argv)
     view = QQuickView()

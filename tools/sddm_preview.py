@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Render the SDDM greeter offscreen with mocked SDDM objects.
 
-Usage: python3 tools/sddm_preview.py OUTPUT.png [WIDTH HEIGHT] [--fail] [--locale es_ES]
-Requires PySide6 (pip install PySide6). Used to produce sddm/stealth-dark/preview.png
-and to catch QML errors without a real login manager.
+Usage: python3 tools/sddm_preview.py OUTPUT.png [WIDTH HEIGHT] [--fail] [--locale es_ES] [--qt5]
+Requires PySide6 (Qt 6, like the Plasma 6 greeter) or, with --qt5, PyQt5
+(Qt 5, like the Plasma 5 greeter). Used to produce the preview images and to
+catch QML errors without a real login manager.
 """
 import argparse
 import os
@@ -11,11 +12,18 @@ import sys
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtCore import (QAbstractListModel, QByteArray, QModelIndex, QObject, Property,
-                            QTimer, QUrl, Qt, Signal, Slot)
-from PySide6.QtGui import QGuiApplication
-from PySide6.QtQml import QQmlPropertyMap
-from PySide6.QtQuick import QQuickView
+if "--qt5" in sys.argv:
+    from PyQt5.QtCore import (QAbstractListModel, QByteArray, QModelIndex, QObject, QTimer, QUrl, Qt,
+                              pyqtProperty as Property, pyqtSignal as Signal, pyqtSlot as Slot)
+    from PyQt5.QtGui import QGuiApplication
+    from PyQt5.QtQml import QQmlEngine, QQmlExpression, QQmlPropertyMap
+    from PyQt5.QtQuick import QQuickView
+else:
+    from PySide6.QtCore import (QAbstractListModel, QByteArray, QModelIndex, QObject, Property,
+                                QTimer, QUrl, Qt, Signal, Slot)
+    from PySide6.QtGui import QGuiApplication
+    from PySide6.QtQml import QQmlEngine, QQmlExpression, QQmlPropertyMap
+    from PySide6.QtQuick import QQuickView
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 THEME = os.path.join(ROOT, "sddm", "stealth-dark")
@@ -47,8 +55,8 @@ class ListModel(QAbstractListModel):
         return self._last
 
     countChanged = Signal()
-    count = Property(int, _count, notify=countChanged)
-    lastIndex = Property(int, _lastIndex, constant=True)
+    count = Property(int, fget=_count, notify=countChanged)
+    lastIndex = Property(int, fget=_lastIndex, constant=True)
 
 
 class Sddm(QObject):
@@ -90,6 +98,8 @@ def main():
     ap.add_argument("size", nargs="*", type=int, default=[1920, 1080])
     ap.add_argument("--fail", action="store_true", help="simulate a failed login")
     ap.add_argument("--locale", default="en_US")
+    ap.add_argument("--qt5", action="store_true", help="render with Qt 5 (PyQt5)")
+    ap.add_argument("--popup", action="store_true", help="open the user list")
     args = ap.parse_args()
 
     app = QGuiApplication(sys.argv)
@@ -125,8 +135,6 @@ def main():
     ctx.setContextProperty("config", cfg)
     ctx.setContextProperty("keyboard", kb)
 
-    errors = []
-    view.statusChanged.connect(lambda st: errors.extend(view.errors()) if st == QQuickView.Error else None)
     view.setSource(QUrl.fromLocalFile(os.path.join(THEME, "Main.qml")))
     if view.status() == QQuickView.Error:
         for e in view.errors():
@@ -139,6 +147,10 @@ def main():
     def simulate_failure():
         if args.fail:
             sddm.loginFailed.emit()
+        if args.popup:
+            combo = view.rootObject().findChild(QObject, "userCombo")
+            ctx2 = QQmlEngine.contextForObject(combo)
+            QQmlExpression(ctx2, combo, "popup.open()").evaluate()
 
     def grab():
         img = view.grabWindow()

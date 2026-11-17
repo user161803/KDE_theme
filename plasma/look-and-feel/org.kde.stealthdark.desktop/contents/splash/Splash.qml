@@ -1,8 +1,8 @@
-// Stealth Dark — Plasma 6 splash screen (KSplashQML)
+// Stealth Dark — splash screen for Plasma 5 and Plasma 6 (KSplashQML)
 // ksplash sets `stage` from 1 to 6 while the session starts.
+// Effects come from FxLoader, which picks the Qt 6 or the Qt 5 implementation.
 
-import QtQuick
-import QtQuick.Effects
+import QtQuick 2.15
 
 Rectangle {
     id: root
@@ -34,14 +34,12 @@ Rectangle {
         fillMode: Image.PreserveAspectCrop
         visible: false
     }
-    MultiEffect {
+    FxLoader {
         id: blurred
         anchors.fill: parent
-        source: wallpaper
-        blurEnabled: true
-        blur: 1.0
-        blurMax: 48
-        autoPaddingEnabled: false
+        effect: "Blur"
+        sourceItem: wallpaper
+        radius: 48
     }
     Image {
         anchors.fill: parent
@@ -73,20 +71,11 @@ Rectangle {
                 return Qt.rect(a.x, a.y, b.x - a.x, b.y - a.y)
             }
         }
-        Item {
-            id: cardMask
+        FxLoader {
             anchors.fill: parent
-            visible: false
-            layer.enabled: true
-            Rectangle { anchors.fill: parent; radius: 25 * root.s; color: "black"; antialiasing: true }
-        }
-        MultiEffect {
-            anchors.fill: parent
-            source: glass
-            maskEnabled: true
-            maskSource: cardMask
-            maskThresholdMin: 0.5
-            maskSpreadAtMin: 1.0
+            effect: "Mask"
+            sourceItem: glass
+            radius: 25 * root.s
         }
         Rectangle {
             anchors.fill: parent
@@ -145,7 +134,6 @@ Rectangle {
             Repeater {
                 model: 6
                 Rectangle {
-                    required property int index
                     width: 40 * root.s
                     height: 4 * root.s
                     radius: height / 2

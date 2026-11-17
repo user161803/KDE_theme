@@ -1,0 +1,16 @@
+[Desktop Entry]
+Name=Stealth Dark
+Comment=Dark glassmorphism global theme, expanded from the Stealth Dark SDDM theme
+Keywords=Desktop;Workspace;Appearance;Look and Feel;Dark;
+Type=Service
+X-KDE-ServiceTypes=Plasma/LookAndFeel
+X-KDE-PluginInfo-Author=Stealth Dark contributors
+X-KDE-PluginInfo-Email=
+X-KDE-PluginInfo-Name=org.kde.stealthdark.desktop
+X-KDE-PluginInfo-Version=1.0
+X-KDE-PluginInfo-Website=https://github.com/user161803/kde_theme
+X-KDE-PluginInfo-Category=
+X-KDE-PluginInfo-License=GPL-3.0-or-later
+X-KDE-PluginInfo-EnabledByDefault=true
+X-Plasma-MainScript=defaults
+X-Plasma-APIVersion=2

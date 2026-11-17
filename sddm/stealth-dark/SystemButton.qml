@@ -1,4 +1,4 @@
-import QtQuick
+import QtQuick 2.15
 
 // Square-ish action tile (Restart / Shutdown / Suspend).
 Rectangle {

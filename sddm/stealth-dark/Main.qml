@@ -1,12 +1,12 @@
-// Stealth Dark — SDDM greeter for Plasma 6 (Qt 6)
+// Stealth Dark — SDDM greeter for Plasma 5 and Plasma 6 (Qt 5 / Qt 6)
 //
-// Port of the original Stealth Dark SDDM theme by @madebydarkxz to Qt 6,
+// Port of the original Stealth Dark SDDM theme by @madebydarkxz. Works with
+// both the Qt 6 greeter (Plasma 6) and the Qt 5 greeter (Plasma 5);
 // extended with a resolution-independent layout, keyboard navigation,
 // caps-lock / error feedback, suspend support and theme.conf options.
 
-import QtQuick
-import QtQuick.Controls.Basic
-import QtQuick.Effects
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 
 Item {
     id: root
@@ -94,15 +94,19 @@ Item {
         visible: false
     }
 
-    MultiEffect {
+    Item {
         id: blurredWallpaper
         anchors.fill: parent
-        source: wallpaper
-        blurEnabled: true
-        blur: 1.0
-        blurMax: Math.round(64 * root.cfgReal("blur", 1.0))
-        autoPaddingEnabled: false
-        brightness: -root.cfgReal("dim", 0.45)
+        FxLoader {
+            anchors.fill: parent
+            effect: "Blur"
+            sourceItem: wallpaper
+            radius: 64 * root.cfgReal("blur", 1.0)
+        }
+        Rectangle {
+            anchors.fill: parent
+            color: Qt.rgba(0, 0, 0, root.cfgReal("dim", 0.45))
+        }
     }
 
     // the sharp wallpaper covers the blurred copy; cards sample the blurred one
@@ -180,6 +184,7 @@ Item {
 
                 GlassComboBox {
                     id: userCombo
+                    objectName: "userCombo"
                     visible: root.hasUsers
                     x: 20 * root.s
                     y: 160 * root.s
@@ -395,33 +400,26 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
                     y: 34 * root.s
 
-                    Item {
-                        id: avatarMask
-                        anchors.fill: parent
-                        visible: false
-                        layer.enabled: true
-                        Rectangle { anchors.fill: parent; radius: width / 2; color: "black"; antialiasing: true }
-                    }
                     Image {
                         id: avatarImage
                         anchors.fill: parent
+                        visible: false
                         fillMode: Image.PreserveAspectCrop
                         sourceSize: Qt.size(width * 2, height * 2)
                         property string userIcon: {
                             var icon = root.userData(260) // UserModel::IconRole
                             return icon ? String(icon) : ""
                         }
-                        source: userIcon !== "" && !failed ? userIcon : "icons/user.svg"
                         property bool failed: false
+                        source: userIcon !== "" && !failed ? userIcon : "icons/user.svg"
                         onUserIconChanged: failed = false
-                        onStatusChanged: if (status === Image.Error && source != "icons/user.svg") failed = true
-                        layer.enabled: true
-                        layer.effect: MultiEffect {
-                            maskEnabled: true
-                            maskSource: avatarMask
-                            maskThresholdMin: 0.5
-                            maskSpreadAtMin: 1.0
-                        }
+                        onStatusChanged: if (status === Image.Error && userIcon !== "") failed = true
+                    }
+                    FxLoader {
+                        anchors.fill: parent
+                        effect: "Mask"
+                        sourceItem: avatarImage
+                        radius: width / 2
                     }
                     Rectangle {
                         anchors.fill: parent

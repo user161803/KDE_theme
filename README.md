@@ -1,9 +1,9 @@
-# 🖤 Stealth Dark para KDE Plasma 6
+# 🖤 Stealth Dark para KDE Plasma 5 y 6
 
-Tema completo para **KDE Plasma 6**: toma la estética glassmorphism oscura del tema
+Tema completo para **KDE Plasma 5 (5.25+) y Plasma 6**: toma la estética glassmorphism oscura del tema
 de login [Stealth Dark SDDM](https://github.com/madebydarkxz/stealth-dark-sddm) y la
 lleva a todo el escritorio: colores, estilo de Plasma, decoración de ventanas, splash,
-fondos, terminal y un greeter SDDM portado a Qt 6.
+fondos, terminal y un greeter SDDM que funciona tanto con Qt 5 como con Qt 6.
 
 ![Escritorio](docs/desktop.jpg)
 
@@ -11,9 +11,9 @@ fondos, terminal y un greeter SDDM portado a Qt 6.
 > del estilo Plasma y de Aurorae, el esquema de colores y el fondo) mediante un
 > renderizador de nueve porciones equivalente al de Plasma (`tools/desktop_preview.py`).
 > No es una captura de una sesión de Plasma en marcha. Las capturas de SDDM y del splash
-> sí son el QML real renderizado con Qt 6.
+> sí son el QML real renderizado con Qt 6 (y comprobado también con Qt 5.15, donde se ve igual).
 
-| Login (SDDM, Qt 6) | Splash |
+| Login (SDDM) | Splash |
 |---|---|
 | ![SDDM](docs/sddm.jpg) | ![Splash](docs/splash.jpg) |
 
@@ -30,10 +30,12 @@ fondos, terminal y un greeter SDDM portado a Qt 6.
 | **Splash** | `…/contents/splash/Splash.qml` | Tarjeta de cristal con el logo, reloj y barra de progreso por etapas. |
 | **Fondos** | `wallpapers/StealthDark`, `wallpapers/StealthMist` | Espinas negras sobre humo oscuro (escritorio) y sobre niebla clara (login). Arte original generado por `tools/gen_wallpapers.py`, de 1920×1080 a 3840×2160 y ultrapanorámico. |
 | **Konsole** | `konsole/` | Esquema de colores (con blur y 90 % de opacidad) y perfil con JetBrains Mono. |
-| **SDDM** | `sddm/stealth-dark` | El login original portado a **Qt 6** (lo que usa SDDM con Plasma 6), con mejoras (ver abajo). |
+| **SDDM** | `sddm/stealth-dark` | El login original, compatible con el greeter **Qt 5** (Plasma 5) y **Qt 6** (Plasma 6), con mejoras (ver abajo). |
 
 ### Mejoras en el tema SDDM
-- Portado a Qt 6 (`QtQuick.Effects`), sin depender de `qt5-graphicaleffects` ni `qt6-5compat`.
+- Un único código QML para Qt 5 y Qt 6: los efectos (blur y esquinas redondeadas) se
+  cargan con `QtQuick.Effects` en Qt 6 y con `QtGraphicalEffects` en Qt 5 (`FxLoader.qml`).
+  En Qt 6 no hace falta `qt6-5compat`.
 - Diseño escalable: se adapta a cualquier resolución (el original tenía las posiciones del
   blur fijas para 1920×1080).
 - Iconos SVG propios: ya no hace falta una Nerd Font para que se vean los iconos.
@@ -48,10 +50,15 @@ fondos, terminal y un greeter SDDM portado a Qt 6.
 
 ## 📦 Requisitos
 
-- **KDE Plasma 6** (escrito para la API de Plasma 6; no es compatible con Plasma 5).
-- Para el login: **SDDM ≥ 0.21 compilado con Qt 6** (`sddm-greeter-qt6`), que es lo que
-  traen las distros con Plasma 6.
+- **KDE Plasma 5.25 o superior, o Plasma 6.** Todos los paquetes llevan `metadata.desktop`
+  (Plasma 5) y `metadata.json` (Plasma 6). En Plasma 5.24 o anterior funciona todo menos el
+  panel flotante.
+- Para el login: **SDDM** con el greeter Qt 5 (`sddm-greeter`, lo habitual con Plasma 5)
+  o Qt 6 (`sddm-greeter-qt6`, SDDM ≥ 0.21, lo habitual con Plasma 6). El instalador
+  detecta cuál tienes.
 - Recomendado: fuente **JetBrains Mono** (o JetBrainsMono Nerd Font) y la fuente **Inter**.
+
+**Plasma 6 / SDDM Qt 6**
 
 | Distro | Paquetes |
 |---|---|
@@ -59,6 +66,15 @@ fondos, terminal y un greeter SDDM portado a Qt 6.
 | Fedora | `sudo dnf install sddm qt6-qtdeclarative qt6-qtsvg jetbrains-mono-fonts rsms-inter-fonts` |
 | Debian / Ubuntu / KDE neon | `sudo apt install sddm qml6-module-qtquick qml6-module-qtquick-controls qml6-module-qtquick-effects qt6-svg-plugins fonts-jetbrains-mono fonts-inter` |
 | openSUSE | `sudo zypper install sddm-qt6 qt6-declarative-imports qt6-svg jetbrains-mono-fonts` |
+
+**Plasma 5 / SDDM Qt 5**
+
+| Distro | Paquetes |
+|---|---|
+| Arch / Manjaro (con Plasma 5) | `sudo pacman -S sddm qt5-graphicaleffects qt5-quickcontrols2 qt5-svg ttf-jetbrains-mono` |
+| Debian 12 / Ubuntu 22.04–24.04 / Kubuntu | `sudo apt install sddm qml-module-qtgraphicaleffects qml-module-qtquick-controls2 qml-module-qtquick-layouts libqt5svg5 fonts-jetbrains-mono` |
+| Fedora (con Plasma 5) | `sudo dnf install sddm qt5-qtgraphicaleffects qt5-qtquickcontrols2 qt5-qtsvg jetbrains-mono-fonts` |
+| openSUSE Leap | `sudo zypper install sddm libqt5-qtgraphicaleffects libqt5-qtquickcontrols2 libqt5-qtsvg` |
 
 ---
 
@@ -77,18 +93,32 @@ cd kde_theme
 
 `--apply` aplica el tema global, el esquema de colores, el estilo de Plasma, la decoración
 Aurorae, el fondo del escritorio y de la pantalla de bloqueo, el splash y el perfil de Konsole.
+Usa las herramientas de Plasma 6 o de Plasma 5 (`plasma-apply-*`/`lookandfeeltool`,
+`kwriteconfig6`/`kwriteconfig5`) según lo que encuentre.
+
+Con `--layout`, en Plasma 6.1+ el dock se ajusta al contenido; en Plasma 5 y 6.0 (que no
+tienen esa opción) se crea con un ancho fijo centrado, que puedes cambiar desde «Editar
+panel».
 
 ### Instalación manual desde la configuración del sistema
 Tras `./install.sh`, en **Configuración del sistema › Colores y temas › Tema global**
-elige **Stealth Dark**. Marca «Disposición del escritorio y de las ventanas» si quieres
+(en Plasma 5: **Apariencia › Tema global**) elige **Stealth Dark**. Marca «Disposición del escritorio y de las ventanas» si quieres
 también el panel tipo dock.
 
 ### Solo el login (SDDM)
 ```bash
 sudo cp -r sddm/stealth-dark /usr/share/sddm/themes/
 echo -e "[Theme]\nCurrent=stealth-dark" | sudo tee /etc/sddm.conf.d/stealth-dark.conf
-sddm-greeter-qt6 --test-mode --theme /usr/share/sddm/themes/stealth-dark   # probar sin reiniciar
+
+# Solo Plasma 5 / greeter Qt 5: quita la línea QtVersion=6
+sudo sed -i '/^QtVersion=/d' /usr/share/sddm/themes/stealth-dark/metadata.desktop
+
+# Probar sin reiniciar
+sddm-greeter-qt6 --test-mode --theme /usr/share/sddm/themes/stealth-dark   # Plasma 6
+sddm-greeter --test-mode --theme /usr/share/sddm/themes/stealth-dark       # Plasma 5
 ```
+`./install.sh --sddm` hace todo esto solo. Para forzar una versión:
+`STEALTH_SDDM_QT=5 ./install.sh --sddm`.
 Si `/etc/sddm.conf` define `Current=` en `[Theme]`, tiene prioridad: cámbialo allí también.
 También puedes seleccionarlo en **Configuración del sistema › Pantalla de inicio de sesión (SDDM)**.
 
@@ -122,6 +152,10 @@ python3 tools/gen_svgs.py         # SVG del estilo Plasma y de Aurorae
 python3 tools/gen_wallpapers.py   # fondos (numpy + pillow)
 python3 tools/validate_svgs.py    # comprueba los marcos de nueve porciones (PySide6)
 xvfb-run -a tools/build_previews.sh   # capturas de docs/ (PySide6 + OpenGL)
+
+# Probar el login y el splash con Qt 5 (como en Plasma 5), con PyQt5 instalado:
+xvfb-run -a python3 tools/sddm_preview.py /tmp/sddm-qt5.png --qt5
+xvfb-run -a python3 tools/splash_preview.py /tmp/splash-qt5.png --qt5
 ```
 
 Cambia un color en `palette.py`, ejecuta los generadores y todo el tema se mantiene
@@ -132,8 +166,8 @@ coherente.
 ## 📜 Créditos y licencia
 
 - Diseño original del login: **[Stealth Dark SDDM](https://github.com/madebydarkxz/stealth-dark-sddm)**
-  de **@madebydarkxz** (basado a su vez en el tema *Ronin*). Este proyecto porta ese diseño
-  a Qt 6 y extiende su estética al resto de Plasma.
+  de **@madebydarkxz** (basado a su vez en el tema *Ronin*). Este proyecto adapta ese diseño
+  a Qt 5 y Qt 6 y extiende su estética al resto de Plasma.
 - Código, QML, SVG y scripts: **GPL-3.0-or-later** (ver `LICENSE`).
 - Fondos `StealthDark` y `StealthMist`: arte original generado por `tools/gen_wallpapers.py`,
   **CC-BY-SA-4.0**. El fondo del repositorio original no se redistribuye aquí.

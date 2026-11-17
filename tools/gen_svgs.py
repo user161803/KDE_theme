@@ -295,9 +295,22 @@ def plasma_theme():
         "Version": "1.0",
         "Website": "https://github.com/user161803/kde_theme"
     },
-    "X-Plasma-API": "5.0",
-    "X-Plasma-API-Minimum-Version": "6.0"
+    "X-Plasma-API": "5.0"
 }
+""")
+    # Plasma 5 (older KF5 releases) reads metadata.desktop
+    write(os.path.join(PLASMA, "metadata.desktop"), """[Desktop Entry]
+Name=Stealth Dark
+Comment=Dark glassmorphism Plasma style matching the Stealth Dark SDDM theme
+X-KDE-PluginInfo-Author=Stealth Dark contributors
+X-KDE-PluginInfo-Email=
+X-KDE-PluginInfo-Name=StealthDark
+X-KDE-PluginInfo-Version=1.0
+X-KDE-PluginInfo-Website=https://github.com/user161803/kde_theme
+X-KDE-PluginInfo-Category=Plasma Theme
+X-KDE-PluginInfo-License=GPL-3.0-or-later
+X-KDE-PluginInfo-EnabledByDefault=true
+X-Plasma-API=5.0
 """)
 
 

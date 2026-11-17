@@ -1,15 +1,33 @@
 // Stealth Dark default layout: one floating, centred dock-style panel.
 // Applied when "Desktop and window layout" is ticked in System Settings >
-// Colors & Themes > Global Theme.
+// Colors & Themes > Global Theme (Plasma 6) / Global Theme (Plasma 5).
+// Works on Plasma 5.25+ and Plasma 6.
+
+function plasmaVersion() {
+    var v = (typeof applicationVersion !== "undefined") ? String(applicationVersion) : "6.0";
+    var parts = v.split(".");
+    return { major: parseInt(parts[0], 10) || 6, minor: parseInt(parts[1], 10) || 0 };
+}
+var version = plasmaVersion();
 
 var panel = new Panel;
 panel.location = "bottom";
 panel.height = 2 * Math.ceil(gridUnit * 2.4 / 2);
 panel.alignment = "center";
 panel.hiding = "none";
-// Newer Plasma 6 properties; ignored gracefully on releases that lack them
+// Floating panels exist since Plasma 5.25
 try { panel.floating = true; } catch (e) { print("floating not supported: " + e); }
-try { panel.lengthMode = "fit"; } catch (e) { print("lengthMode not supported: " + e); }
+
+if (version.major > 6 || (version.major === 6 && version.minor >= 1)) {
+    // Plasma 6.1+: the panel shrinks to fit its widgets
+    try { panel.lengthMode = "fit"; } catch (e) { print("lengthMode not supported: " + e); }
+} else {
+    // Plasma 5 / 6.0: emulate the dock with a fixed, centred length
+    var geo = screenGeometry(panel.screen);
+    var length = Math.round(Math.min(geo.width * 0.5, gridUnit * 50));
+    panel.minimumLength = length;
+    panel.maximumLength = length;
+}
 
 var kickoff = panel.addWidget("org.kde.plasma.kickoff");
 kickoff.currentConfigGroup = ["General"];

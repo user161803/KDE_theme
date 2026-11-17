@@ -1,5 +1,4 @@
-import QtQuick
-import QtQuick.Effects
+import QtQuick 2.15
 
 // A rounded "glass" card: shows the blurred wallpaper that lies behind it,
 // tinted with a translucent dark layer and a hairline border.
@@ -31,27 +30,11 @@ Item {
         }
     }
 
-    Item {
-        id: maskShape
+    FxLoader {
         anchors.fill: parent
-        visible: false
-        layer.enabled: true
-        layer.smooth: true
-        Rectangle {
-            anchors.fill: parent
-            radius: card.radius
-            color: "black"
-            antialiasing: true
-        }
-    }
-
-    MultiEffect {
-        anchors.fill: parent
-        source: glassSource
-        maskEnabled: true
-        maskSource: maskShape
-        maskThresholdMin: 0.5
-        maskSpreadAtMin: 1.0
+        effect: "Mask"
+        sourceItem: glassSource
+        radius: card.radius
         visible: card.blurSource !== null
     }
 

@@ -263,6 +263,15 @@ def write_package(name, title, description, img):
     }
 }
 """ % (description, name, title))
+    # Plasma 5 (older KF5 releases) reads metadata.desktop
+    with open(os.path.join(pkg, "metadata.desktop"), "w") as fh:
+        fh.write("""[Desktop Entry]
+Name=%s
+X-KDE-PluginInfo-Name=%s
+X-KDE-PluginInfo-Author=Stealth Dark contributors
+X-KDE-PluginInfo-License=CC-BY-SA-4.0
+X-KDE-PluginInfo-Version=1.0
+""" % (title, name))
     return img
 
 
