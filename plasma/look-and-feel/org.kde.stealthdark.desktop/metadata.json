@@ -1,0 +1,19 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Stealth Dark contributors"
+            }
+        ],
+        "Category": "",
+        "Description": "Dark glassmorphism global theme, expanded from the Stealth Dark SDDM theme",
+        "Id": "org.kde.stealthdark.desktop",
+        "License": "GPL-3.0-or-later",
+        "Name": "Stealth Dark",
+        "Version": "1.0",
+        "Website": "https://github.com/user161803/kde_theme"
+    },
+    "X-Plasma-APIVersion": "2",
+    "X-Plasma-MainScript": "defaults"
+}

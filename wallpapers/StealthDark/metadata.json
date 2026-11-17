@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Stealth Dark contributors"
+            }
+        ],
+        "Description": "Black thorns drifting through dark smoke",
+        "Id": "StealthDark",
+        "License": "CC-BY-SA-4.0",
+        "Name": "Stealth Dark"
+    }
+}

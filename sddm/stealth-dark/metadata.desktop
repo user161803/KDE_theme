@@ -1,0 +1,15 @@
+[SddmGreeterTheme]
+Name=Stealth Dark
+Description=Dark glassmorphism login screen, part of the Stealth Dark theme for KDE Plasma 6
+Author=Stealth Dark contributors (original design by madebydarkxz)
+Copyright=(c) 2026
+License=GPL-3.0-or-later
+Type=sddm-theme
+Version=2.0
+Website=https://github.com/user161803/kde_theme
+Screenshot=preview.jpg
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=stealth-dark
+Theme-API=2.0
+QtVersion=6

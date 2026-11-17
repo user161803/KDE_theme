@@ -1,0 +1,16 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Stealth Dark contributors"
+            }
+        ],
+        "Description": "Dark rounded window decoration matching the Stealth Dark theme",
+        "EnabledByDefault": true,
+        "Id": "StealthDark",
+        "License": "GPL-3.0-or-later",
+        "Name": "Stealth Dark",
+        "Version": "1.0",
+        "Website": "https://github.com/user161803/kde_theme"
+    }
+}
