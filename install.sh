@@ -13,6 +13,8 @@
 #   --all          Plasma parts + SDDM theme
 #   --apply        apply global theme, colors, style, decoration, wallpaper, lock screen, Konsole profile
 #   --layout       with --apply: also replace the panel layout with the Stealth Dark dock
+#   --papirus      also install the Papirus-Dark icons (app icons) in ~/.local/share/icons
+#                  with grey folders; downloads ~30 MB from GitHub, no sudo needed
 #   --uninstall    remove the installed files
 #   --diagnose     print what is currently applied (paste it when reporting a problem)
 #   -h, --help     show this help
@@ -28,7 +30,7 @@ LNF_ID="org.kde.stealthdark.desktop"
 SDDM_DIR="/usr/share/sddm/themes/stealth-dark"
 SDDM_CONF="/etc/sddm.conf.d/stealth-dark.conf"
 
-DO_PLASMA=0 DO_SDDM=0 DO_APPLY=0 DO_LAYOUT=0 DO_UNINSTALL=0 DO_DIAGNOSE=0
+DO_PLASMA=0 DO_SDDM=0 DO_APPLY=0 DO_LAYOUT=0 DO_UNINSTALL=0 DO_DIAGNOSE=0 DO_PAPIRUS=0
 
 bold=$'\e[1m' dim=$'\e[2m' red=$'\e[31m' green=$'\e[32m' yellow=$'\e[33m' reset=$'\e[0m'
 info() { printf '%s==>%s %s\n' "$bold" "$reset" "$*"; }
@@ -48,6 +50,7 @@ for arg in "$@"; do
         --layout) DO_LAYOUT=1 ;;
         --uninstall) DO_UNINSTALL=1 ;;
         --diagnose) DO_DIAGNOSE=1 ;;
+        --papirus) DO_PAPIRUS=1 ;;
         -h|--help) usage; exit 0 ;;
         *) usage; die "unknown option: $arg" ;;
     esac
@@ -65,6 +68,7 @@ PLASMA_ITEMS=(
     "wallpapers/StealthMist|$DATA/wallpapers/StealthMist"
     "konsole/StealthDark.colorscheme|$DATA/konsole/StealthDark.colorscheme"
     "konsole/StealthDark.profile|$DATA/konsole/StealthDark.profile"
+    "icons/StealthDark|$DATA/icons/StealthDark"
 )
 # removed on --uninstall only if this script installed it
 FONT_DIR="$DATA/fonts/JetBrainsMono"
@@ -146,6 +150,73 @@ install_plasma() {
     install_fonts
 }
 
+# Papirus-Dark provides the application icons; installed per user, no root.
+PAPIRUS_URL="${STEALTH_PAPIRUS_URL:-https://github.com/PapirusDevelopmentTeam/papirus-icon-theme/archive/refs/heads/master.tar.gz}"
+install_papirus() {
+    info "Installing Papirus-Dark icons into $DATA/icons"
+    if [[ -d "$DATA/icons/Papirus-Dark" ]]; then ok "Papirus-Dark already installed"; return 0; fi
+    local tmp
+    tmp="$(mktemp -d)"
+    local fetch
+    if have curl; then fetch=(curl -fsSL "$PAPIRUS_URL")
+    elif have wget; then fetch=(wget -qO- "$PAPIRUS_URL")
+    else warn "curl or wget is needed to download Papirus"; rm -rf "$tmp"; return 0; fi
+    if ! "${fetch[@]}" | tar -xzf - -C "$tmp" --wildcards '*/Papirus/*' '*/Papirus-Dark/*'; then
+        warn "could not download Papirus (no network?); the theme keeps using Breeze Dark icons"
+        rm -rf "$tmp"
+        return 0
+    fi
+    local top
+    top="$(find "$tmp" -mindepth 1 -maxdepth 1 -type d | head -n1)"
+    mkdir -p "$DATA/icons"
+    rm -rf "$DATA/icons/Papirus" "$DATA/icons/Papirus-Dark"
+    cp -a "$top/Papirus" "$top/Papirus-Dark" "$DATA/icons/"
+    rm -rf "$tmp"
+    # grey folders instead of the default blue ones (what papirus-folders -C grey does)
+    local link target grey n=0
+    while IFS= read -r -d '' link; do
+        target="$(readlink "$link")"
+        case "$target" in
+            *folder-blue*|*user-blue*)
+                grey="${target//-blue/-grey}"
+                if [[ -e "$(dirname "$link")/$grey" ]]; then ln -sfn "$grey" "$link"; n=$((n + 1)); fi ;;
+        esac
+    done < <(find "$DATA/icons/Papirus" "$DATA/icons/Papirus-Dark" -type l -print0)
+    have gtk-update-icon-cache && gtk-update-icon-cache -q -f "$DATA/icons/Papirus" 2>/dev/null || true
+    ok "Papirus + Papirus-Dark installed ($n folder icons switched to grey)"
+}
+
+# The icon theme is applied explicitly: plasma-apply-lookandfeel does not
+# always do it (it depends on the Plasma release and on distribution policy).
+apply_icons() {
+    local theme=StealthDark p
+    for p in plasma-changeicons /usr/lib/x86_64-linux-gnu/libexec/plasma-changeicons \
+             /usr/lib/aarch64-linux-gnu/libexec/plasma-changeicons /usr/libexec/plasma-changeicons \
+             /usr/lib/plasma-changeicons /usr/lib64/libexec/plasma-changeicons /usr/lib/libexec/plasma-changeicons; do
+        if command -v "$p" >/dev/null 2>&1; then
+            "$p" "$theme" >/dev/null 2>&1 && { ok "icon theme"; icons_locked_warning; return 0; }
+        fi
+    done
+    kwrite --file kdeglobals --group Icons --key Theme "$theme" || true
+    if have dbus-send; then
+        # tell running applications to reload icons (KIconLoader / KGlobalSettings)
+        dbus-send --session --type=signal /KIconLoader org.kde.KIconLoader.iconChanged int32:0 2>/dev/null || true
+        dbus-send --session --type=signal /KGlobalSettings org.kde.KGlobalSettings.notifyChange int32:4 int32:0 2>/dev/null || true
+    fi
+    ok "icon theme (log out and back in if the panel keeps the old icons)"
+    icons_locked_warning
+}
+
+# Distributions/schools can lock settings system-wide (KDE Kiosk, "[$i]")
+icons_locked_warning() {
+    local f
+    for f in /etc/xdg/kdeglobals /etc/kde5rc /etc/kde6rc; do
+        if [[ -f "$f" ]] && grep -Eq '^\[Icons\]\[\$i\]|^Theme\[\$i\]' "$f"; then
+            warn "the icon theme is locked by the system administrator in $f; it cannot be changed per user"
+        fi
+    done
+}
+
 # JetBrains Mono is bundled so it can be installed without root
 install_fonts() {
     if fc-list : family 2>/dev/null | grep -i "JetBrains Mono" >/dev/null; then
@@ -184,6 +255,7 @@ apply_plasma() {
     fi
     have plasma-apply-colorscheme && plasma-apply-colorscheme StealthDark >/dev/null && ok "color scheme"
     have plasma-apply-desktoptheme && plasma-apply-desktoptheme StealthDark >/dev/null && ok "Plasma style"
+    apply_icons
     [[ $DO_LAYOUT -eq 1 ]] && apply_layout
     local wp="$DATA/wallpapers/StealthDark"
     if have plasma-apply-wallpaperimage; then
@@ -225,6 +297,11 @@ diagnose() {
     echo "  Plasma style:      $(kread --file plasmarc --group Theme --key name)"
     echo "  Widget style:      $(kread --file kdeglobals --group KDE --key widgetStyle)"
     echo "  Icons:             $(kread --file kdeglobals --group Icons --key Theme)"
+    echo "  Papirus-Dark:      $([[ -d $DATA/icons/Papirus-Dark ]] && echo installed || echo 'not installed (optional: --papirus)')"
+    local lf
+    for lf in /etc/xdg/kdeglobals /etc/kde5rc /etc/kde6rc; do
+        [[ -f "$lf" ]] && grep -En '\[\$i\]' "$lf" 2>/dev/null | sed "s|^|  LOCKED in $lf: |"
+    done
     echo "  Decoration:        $(kread --file kwinrc --group org.kde.kdecoration2 --key library) / $(kread --file kwinrc --group org.kde.kdecoration2 --key theme)"
     echo "  Blur effect:       $(kread --file kwinrc --group Plugins --key blurEnabled)"
     echo "  Compositing:       $(kread --file kwinrc --group Compositing --key Enabled) ($(kread --file kwinrc --group Compositing --key Backend))"
@@ -321,6 +398,7 @@ if [[ $DO_UNINSTALL -eq 1 ]]; then
 fi
 
 [[ $DO_PLASMA -eq 1 ]] && install_plasma
+[[ $DO_PAPIRUS -eq 1 ]] && install_papirus
 [[ $DO_PLASMA -eq 1 && $DO_APPLY -eq 1 ]] && apply_plasma
 [[ $DO_SDDM -eq 1 ]] && install_sddm
 

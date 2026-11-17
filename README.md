@@ -29,6 +29,7 @@ fondos, terminal y un greeter SDDM que funciona tanto con Qt 5 como con Qt 6.
 | **Decoración de ventanas** | `aurorae/themes/StealthDark` | Barra de título Aurorae oscura con esquinas redondeadas, sombra y botones circulares (el de cerrar se vuelve rojo). |
 | **Splash** | `…/contents/splash/Splash.qml` | Tarjeta de cristal con el logo, reloj y barra de progreso por etapas. |
 | **Fondos** | `wallpapers/StealthDark`, `wallpapers/StealthMist` | Espinas negras sobre humo oscuro (escritorio) y sobre niebla clara (login). Arte original generado por `tools/gen_wallpapers.py`, de 1920×1080 a 3840×2160 y ultrapanorámico. |
+| **Iconos** | `icons/StealthDark` | Carpetas grafito con emblemas plateados (personal, descargas, música…), papelera y el logo del tema en el menú de inicio. El resto de iconos se heredan de Papirus-Dark (opcional, `--papirus`) o de Breeze Dark. |
 | **Konsole** | `konsole/` | Esquema de colores (con blur y 90 % de opacidad) y perfil con JetBrains Mono. |
 | **SDDM** | `sddm/stealth-dark` | El login original, compatible con el greeter **Qt 5** (Plasma 5) y **Qt 6** (Plasma 6), con mejoras (ver abajo). |
 
@@ -87,6 +88,7 @@ cd kde_theme
 ./install.sh                 # instala la parte de Plasma en ~/.local/share (sin sudo)
 ./install.sh --apply         # …y además lo aplica todo ahora mismo
 ./install.sh --apply --layout  # …y sustituye tus paneles por el dock flotante del tema (guarda copia)
+./install.sh --apply --papirus # …y descarga Papirus-Dark para los iconos de aplicaciones (sin sudo)
 ./install.sh --sddm          # instala y activa el login (pide sudo)
 ./install.sh --all --apply   # todo de una vez
 ```
@@ -149,6 +151,10 @@ También puedes seleccionarlo en **Configuración del sistema › Pantalla de in
   `~/.local/share/fonts` si no la tienes (no hace falta sudo).
 - **Sin sudo**: todo lo de Plasma se instala en tu carpeta personal. Solo el login (SDDM)
   necesita permisos de administrador, porque vive en `/usr/share/sddm/themes`.
+- **Los iconos no cambian**: `--diagnose` muestra el tema de iconos activo y si el sistema
+  lo tiene bloqueado (líneas `LOCKED`, típico de equipos gestionados como LliureX); en ese caso
+  solo un administrador puede cambiarlo. Los iconos de las aplicaciones solo cambian con
+  `--papirus`. El panel puede necesitar cerrar sesión para recargar los iconos.
 - **El panel no es translúcido**: en máquinas virtuales o sin aceleración gráfica KWin
   desactiva el desenfoque, y Plasma usa la variante opaca del estilo.
 
@@ -159,8 +165,9 @@ También puedes seleccionarlo en **Configuración del sistema › Pantalla de in
   original del tema SDDM de madebydarkxz funciona tal cual.
 - **Logo de tu distro en el login**: `logo=/usr/share/pixmaps/archlinux-logo.svg` y
   `systemName=Arch Linux`.
-- **Iconos**: el tema usa `breeze-dark`, que siempre está instalado. Queda muy bien con
-  [Papirus-Dark](https://github.com/PapirusDevelopmentTeam/papirus-icon-theme).
+- **Iconos**: el tema de iconos Stealth Dark solo redibuja carpetas, papelera y el lanzador;
+  los iconos de aplicaciones vienen de [Papirus-Dark](https://github.com/PapirusDevelopmentTeam/papirus-icon-theme)
+  si lo instalas con `--papirus` (con carpetas en gris), o de Breeze Dark si no.
 - **Estilo de aplicaciones**: Breeze con el esquema Stealth Dark. Si quieres más
   transparencia en las aplicaciones, combina con Kvantum.
 
@@ -171,6 +178,7 @@ Todo lo gráfico sale de scripts en `tools/` a partir de la paleta de `tools/pal
 ```bash
 python3 tools/gen_colors.py       # .colors, colores del estilo Plasma y Konsole
 python3 tools/gen_svgs.py         # SVG del estilo Plasma y de Aurorae
+python3 tools/gen_icons.py        # tema de iconos
 python3 tools/gen_wallpapers.py   # fondos (numpy + pillow)
 python3 tools/validate_svgs.py    # comprueba los marcos de nueve porciones (PySide6)
 xvfb-run -a tools/build_previews.sh   # capturas de docs/ (PySide6 + OpenGL)
