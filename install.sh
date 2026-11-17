@@ -66,6 +66,8 @@ PLASMA_ITEMS=(
     "konsole/StealthDark.colorscheme|$DATA/konsole/StealthDark.colorscheme"
     "konsole/StealthDark.profile|$DATA/konsole/StealthDark.profile"
 )
+# removed on --uninstall only if this script installed it
+FONT_DIR="$DATA/fonts/JetBrainsMono"
 
 kread() {
     if have kreadconfig6; then kreadconfig6 "$@"
@@ -141,6 +143,20 @@ install_plasma() {
         cp -r "$SRC/$src" "$dst"
         ok "${src}"
     done
+    install_fonts
+}
+
+# JetBrains Mono is bundled so it can be installed without root
+install_fonts() {
+    if fc-list : family 2>/dev/null | grep -i "JetBrains Mono" >/dev/null; then
+        ok "JetBrains Mono already installed"
+        return 0
+    fi
+    local fdir="$DATA/fonts/JetBrainsMono"
+    mkdir -p "$fdir"
+    cp "$SRC"/fonts/JetBrainsMono/*.ttf "$fdir/"
+    have fc-cache && fc-cache -f "$DATA/fonts" >/dev/null 2>&1 || true
+    ok "JetBrains Mono installed for this user ($fdir)"
 }
 
 uninstall_plasma() {
@@ -149,6 +165,7 @@ uninstall_plasma() {
         local dst="${item##*|}"
         if [[ -e "$dst" ]]; then rm -rf "$dst"; ok "removed $dst"; fi
     done
+    if [[ -d "$FONT_DIR" ]]; then rm -rf "$FONT_DIR"; ok "removed $FONT_DIR"; fi
     warn "settings that pointed to Stealth Dark fall back to Plasma defaults; pick another theme in System Settings"
 }
 
@@ -173,9 +190,6 @@ apply_plasma() {
         plasma-apply-wallpaperimage "$wp/contents/images/3840x2160.jpg" >/dev/null 2>&1 && ok "desktop wallpaper"
     fi
 
-    if ! fc-list : family 2>/dev/null | grep -i "JetBrains" >/dev/null; then
-        warn "JetBrains Mono not found: install it for the intended look (pacman -S ttf-jetbrains-mono / apt install fonts-jetbrains-mono)"
-    fi
     if ! have kwriteconfig6 && ! have kwriteconfig5; then
         warn "kwriteconfig6/kwriteconfig5 not found: decoration, lock screen, splash and Konsole were not configured"
         return 0

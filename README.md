@@ -145,7 +145,10 @@ También puedes seleccionarlo en **Configuración del sistema › Pantalla de in
   sesión y vuelve a entrar. También puedes elegirla en *Configuración del sistema ›
   Apariencia › Decoraciones de ventanas › Stealth Dark*.
 - **Konsole sigue igual**: las ventanas que ya estaban abiertas conservan su perfil; abre una
-  nueva. Para la tipografía, instala JetBrains Mono (`sudo apt install fonts-jetbrains-mono`).
+  nueva. JetBrains Mono viene incluida en `fonts/` y el instalador la instala en
+  `~/.local/share/fonts` si no la tienes (no hace falta sudo).
+- **Sin sudo**: todo lo de Plasma se instala en tu carpeta personal. Solo el login (SDDM)
+  necesita permisos de administrador, porque vive en `/usr/share/sddm/themes`.
 - **El panel no es translúcido**: en máquinas virtuales o sin aceleración gráfica KWin
   desactiva el desenfoque, y Plasma usa la variante opaca del estilo.
 
@@ -189,4 +192,5 @@ coherente.
   a Qt 5 y Qt 6 y extiende su estética al resto de Plasma.
 - Código, QML, SVG y scripts: **GPL-3.0-or-later** (ver `LICENSE`).
 - Fondos `StealthDark` y `StealthMist`: arte original generado por `tools/gen_wallpapers.py`,
-  **CC-BY-SA-4.0**. El fondo del repositorio original no se redistribuye aquí.
+  **CC-BY-SA-4.0**.
+- Fuente incluida: **JetBrains Mono** © JetBrains, ver `fonts/JetBrainsMono/README.md`. El fondo del repositorio original no se redistribuye aquí.
