@@ -86,7 +86,7 @@ cd kde_theme
 
 ./install.sh                 # instala la parte de Plasma en ~/.local/share (sin sudo)
 ./install.sh --apply         # …y además lo aplica todo ahora mismo
-./install.sh --apply --layout  # …y sustituye tus paneles por el dock flotante del tema
+./install.sh --apply --layout  # …y sustituye tus paneles por el dock flotante del tema (guarda copia)
 ./install.sh --sddm          # instala y activa el login (pide sudo)
 ./install.sh --all --apply   # todo de una vez
 ```
@@ -129,6 +129,25 @@ También puedes seleccionarlo en **Configuración del sistema › Pantalla de in
 ```
 
 ---
+
+## 🩺 Si algo no se aplica
+
+```bash
+./install.sh --diagnose      # muestra qué tema, colores, decoración, etc. están activos
+```
+
+- **El panel no cambia**: ejecuta `./install.sh --apply --layout`. El instalador sustituye
+  los paneles directamente a través de plasmashell (D-Bus), porque algunas distribuciones
+  (por ejemplo LliureX) ignoran o restauran el «reinicio de disposición» del tema global.
+  Antes guarda una copia: `~/.config/plasma-org.kde.plasma.desktop-appletsrc.before-stealth-dark.*`.
+  Para volver al panel anterior, copia ese fichero sobre el original y reinicia la sesión.
+- **La barra de título no cambia**: si no hay `qdbus`, KWin no siempre se recarga; cierra la
+  sesión y vuelve a entrar. También puedes elegirla en *Configuración del sistema ›
+  Apariencia › Decoraciones de ventanas › Stealth Dark*.
+- **Konsole sigue igual**: las ventanas que ya estaban abiertas conservan su perfil; abre una
+  nueva. Para la tipografía, instala JetBrains Mono (`sudo apt install fonts-jetbrains-mono`).
+- **El panel no es translúcido**: en máquinas virtuales o sin aceleración gráfica KWin
+  desactiva el desenfoque, y Plasma usa la variante opaca del estilo.
 
 ## 🎨 Personalización
 
