@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Stealth Dark contributors"
+            }
+        ],
+        "Description": "Black thorns over pale fog",
+        "Id": "StealthMist",
+        "License": "CC-BY-SA-4.0",
+        "Name": "Stealth Mist"
+    }
+}

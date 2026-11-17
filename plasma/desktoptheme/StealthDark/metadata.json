@@ -1,0 +1,19 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Stealth Dark contributors"
+            }
+        ],
+        "Category": "",
+        "Description": "Dark glassmorphism Plasma style matching the Stealth Dark SDDM theme",
+        "EnabledByDefault": true,
+        "Id": "StealthDark",
+        "License": "GPL-3.0-or-later",
+        "Name": "Stealth Dark",
+        "Version": "1.0",
+        "Website": "https://github.com/user161803/kde_theme"
+    },
+    "X-Plasma-API": "5.0",
+    "X-Plasma-API-Minimum-Version": "6.0"
+}
